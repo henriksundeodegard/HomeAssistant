@@ -27,8 +27,8 @@ blueprint:
       description: List of scenes to activate
       selector:
         entity:
+          multiple: true
           filter:
             - integration: hue
               domain: scene
               device_class: scene
-              multiple: true
