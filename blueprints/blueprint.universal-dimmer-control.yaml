@@ -31,4 +31,3 @@ blueprint:
           filter:
             - integration: hue
               domain: scene
-              device_class: scene
