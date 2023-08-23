@@ -1,0 +1,16 @@
+blueprint:
+  name: Universal Dimmer Control
+  description: Control various functions of a Dimmer
+  domain: automation
+  input:
+    device_id:
+      name: Device ID
+      description: ID of the dimmer device
+      selector:
+        device: {}
+    light_entity:
+      name: Light Entity
+      description: Entity ID of the light to control
+      selector:
+        entity:
+          domain: light
