@@ -1,5 +1,5 @@
 blueprint:
-  name: Universal Dimmer Control
+  name: Universal Hue Dimmer Control
   description: Control various functions of a Dimmer
   domain: automation
   input:
@@ -7,10 +7,23 @@ blueprint:
       name: Device ID
       description: ID of the dimmer device
       selector:
-        device: {}
+        device:
+          domain: hue
     light_entity:
       name: Light Entity
       description: Entity ID of the light to control
       selector:
         entity:
           domain: light
+    counter_entity:
+      name: Counter Entity
+      description: Entity ID of the counter to control
+      selector:
+        entity:
+          domain: counter
+    scenes:
+      name: Scenes
+      description: List of scenes to activate
+      selector:
+        multiple:
+          domain: scene
