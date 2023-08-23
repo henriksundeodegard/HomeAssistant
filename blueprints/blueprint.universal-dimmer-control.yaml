@@ -8,20 +8,26 @@ blueprint:
       description: ID of the dimmer device
       selector:
         device:
-          entity:
-            domain: hue
+          multiple: false
+          filter:
+            - integration: hue
+              domain: remote
     light_entity:
-      name: Light Entity
-      description: Entity ID of the light to control
+      name: Lights
+      description: List of lights to control
       selector:
         entity:
-          domain: light
+          multiple: true
+          filter:
+            - domain: light
     counter_entity:
       name: Counter Entity
-      description: Entity ID of the counter to control
+      description: Entity ID of the counter that controls the scenes
       selector:
         entity:
-          domain: counter
+          multiple: false
+          filter:
+            - domain: counter
     scenes:
       name: Scenes
       description: List of scenes to activate
