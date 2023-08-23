@@ -173,10 +173,6 @@ action:
             id:
               - Button4_InitialPress
         sequence:
-          - service: system_log.write
-            data:
-              message: "Scene counter (int): {{ (states(scene_counter) | int) }}, Scenes length: {{ scene_entities | length }}}}, Boolean: {{ (states(scene_counter) | int) >= (scene_entities | length) }}"
-              level: info
           - if:
               - condition: template
                 value_template: "{{ (states(scene_counter) | int) >= (scene_entities | length) }}"
@@ -192,17 +188,6 @@ action:
           - repeat:
               count: "{{ scene_entities | length }}"
               sequence:
-                - service: system_log.write
-                  data:
-                    message: "Scene entities: {{ scene_entities }}, Length: {{ scene_entities | length }}, Current iteration: {{ repeat.index }}, Current scene: {{ scene_entities[repeat.index - 1] }}, Scene counter: {{ scene_counter }}, Scene counter state: {{ states(scene_counter) }}"
-                    level: info
-                    # OUTPUT:
-                    # Scene entities: ['scene.kontor_naturlig_lys', 'scene.kontor_les', 'scene.kontor_slapp_av', 'scene.kontor_nattlys'],
-                    # Length: 4,
-                    # Current iteration: 3,
-                    # Current scene: scene.kontor_slapp_av,
-                    # Scene counter: counter.office_dimmer_button4_counter,
-                    # Scene counter state: 2
                 - if:
                     - condition: template
                       value_template: "{{ (states(scene_counter) | int) == (repeat.index) }}"
