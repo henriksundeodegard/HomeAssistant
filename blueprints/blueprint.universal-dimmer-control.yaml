@@ -8,7 +8,8 @@ blueprint:
       description: ID of the dimmer device
       selector:
         device:
-          domain: hue
+          entity:
+            domain: hue
     light_entity:
       name: Light Entity
       description: Entity ID of the light to control
@@ -25,5 +26,6 @@ blueprint:
       name: Scenes
       description: List of scenes to activate
       selector:
-        multiple:
+        multiple: true
+        entity:
           domain: scene
