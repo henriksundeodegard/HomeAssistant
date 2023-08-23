@@ -27,5 +27,4 @@ blueprint:
       description: List of scenes to activate
       selector:
         multiple: true
-        entity:
-          domain: scene
+        action:
