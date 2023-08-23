@@ -42,36 +42,47 @@ blueprint:
             - domain: counter
 
 trigger:
+  # First button, initial press
   - device_id: !input dimmer_device
     domain: hue
     platform: device
     type: initial_press
     subtype: 1
     id: Button1_InitialPress
+
+  # Second button, initial press
   - device_id: !input dimmer_device
     domain: hue
     platform: device
     type: initial_press
     subtype: 2
     id: Button2_InitialPress
+
+  # Second button, long press
   - device_id: !input dimmer_device
     domain: hue
     platform: device
     type: repeat
     subtype: 2
     id: Button2_LongPress
+
+  # Third button, initial press
   - device_id: !input dimmer_device
     domain: hue
     platform: device
     type: initial_press
     subtype: 3
     id: Button3_InitialPress
+
+  # Third button, long press
   - device_id: !input dimmer_device
     domain: hue
     platform: device
     type: repeat
     subtype: 3
     id: Button3_LongPress
+
+  # Fourth button, initial press
   - device_id: !input dimmer_device
     domain: hue
     platform: device
@@ -83,7 +94,10 @@ action:
   - variables:
       scene_entities: !input scene_entities
       scene_counter: !input scene_counter
+
+  # Actions for each trigger
   - choose:
+      # First button, initial press, toggle lights
       - conditions:
           - condition: trigger
             id:
@@ -100,6 +114,8 @@ action:
             data: {}
             target:
               entity_id: !input scene_counter
+
+      # Second button, initial press, increase brightness
       - conditions:
           - condition: trigger
             id:
@@ -117,6 +133,8 @@ action:
             data: {}
             target:
               entity_id: !input scene_counter
+
+      # Second button, long press, increase brightness continuously
       - conditions:
           - condition: trigger
             id:
@@ -134,6 +152,8 @@ action:
             data: {}
             target:
               entity_id: !input scene_counter
+
+      # Third button, initial press, decrease brightness
       - conditions:
           - condition: trigger
             id:
@@ -151,6 +171,8 @@ action:
             data: {}
             target:
               entity_id: !input scene_counter
+
+      # Third button, long press, decrease brightness continuously
       - conditions:
           - condition: trigger
             id:
@@ -168,11 +190,14 @@ action:
             data: {}
             target:
               entity_id: !input scene_counter
+
+      # Fourth button, initial press, activate scenes
       - conditions:
           - condition: trigger
             id:
               - Button4_InitialPress
         sequence:
+          # Reset counter if it is larger than the number of scenes
           - if:
               - condition: template
                 value_template: "{{ (states(scene_counter) | int) >= (scene_entities | length) }}"
@@ -181,10 +206,14 @@ action:
                 data: {}
                 target:
                   entity_id: !input scene_counter
+
+          # Increment counter to select next scene
           - service: counter.increment
             data: {}
             target:
               entity_id: !input scene_counter
+
+          # Activate scene based on counter value
           - repeat:
               count: "{{ scene_entities | length }}"
               sequence:
