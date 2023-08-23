@@ -3,37 +3,212 @@ blueprint:
   description: Control various functions of a Dimmer
   domain: automation
   input:
-    device_id:
-      name: Device ID
-      description: ID of the dimmer device
+    dimmer_device:
+      name: Dimmer Remote
+      description: The Dimmer Device that triggers the automation
       selector:
         device:
           multiple: false
+          entity:
+            - device_class: button
           filter:
             - integration: hue
-              domain: remote
-    light_entity:
-      name: Lights
-      description: List of lights to control
+    light_devices:
+      name: Light
+      description: The Light Devices to control
       selector:
-        entity:
+        device:
           multiple: true
-          filter:
+          entity:
             - domain: light
-    counter_entity:
-      name: Counter Entity
-      description: Entity ID of the counter that controls the scenes
-      selector:
-        entity:
-          multiple: false
           filter:
-            - domain: counter
-    scenes:
+            - integration: hue
+    scene_entities:
       name: Scenes
-      description: List of scenes to activate
+      description: List of scenes to activate when pressing the fourth button on the dimmer remote. The scenes are selected based on the current counter value. The counter value is incremented by 1 each time the button is pressed, and loops back to start.
       selector:
         entity:
           multiple: true
           filter:
             - integration: hue
               domain: scene
+    scene_counter:
+      name: Scene Counter Variable
+      description: Global counter variable to keep track of the scene state. This should be a Counter Helper created under "Devices and Services".
+      selector:
+        entity:
+          multiple: false
+          filter:
+            - domain: counter
+
+trigger:
+  - device_id: !input dimmer_device
+    domain: hue
+    platform: device
+    type: initial_press
+    subtype: 1
+    id: Button1_InitialPress
+  - device_id: !input dimmer_device
+    domain: hue
+    platform: device
+    type: initial_press
+    subtype: 2
+    id: Button2_InitialPress
+  - device_id: !input dimmer_device
+    domain: hue
+    platform: device
+    type: repeat
+    subtype: 2
+    id: Button2_LongPress
+  - device_id: !input dimmer_device
+    domain: hue
+    platform: device
+    type: initial_press
+    subtype: 3
+    id: Button3_InitialPress
+  - device_id: !input dimmer_device
+    domain: hue
+    platform: device
+    type: repeat
+    subtype: 3
+    id: Button3_LongPress
+  - device_id: !input dimmer_device
+    domain: hue
+    platform: device
+    type: initial_press
+    subtype: 4
+    id: Button4_InitialPress
+
+action:
+  - variables:
+      scene_entities: !input scene_entities
+      scene_counter: !input scene_counter
+  - choose:
+      - conditions:
+          - condition: trigger
+            id:
+              - Button1_InitialPress
+        sequence:
+          - repeat:
+              for_each: !input light_devices
+              sequence:
+                - service: light.toggle
+                  data: {}
+                  target:
+                    device_id: "{{ repeat.item }}"
+          - service: counter.reset
+            data: {}
+            target:
+              entity_id: !input scene_counter
+      - conditions:
+          - condition: trigger
+            id:
+              - Button2_InitialPress
+        sequence:
+          - repeat:
+              for_each: !input light_devices
+              sequence:
+                service: light.turn_on
+                data:
+                  brightness_step_pct: 20
+                target:
+                  device_id: "{{ repeat.item }}"
+          - service: counter.reset
+            data: {}
+            target:
+              entity_id: !input scene_counter
+      - conditions:
+          - condition: trigger
+            id:
+              - Button2_LongPress
+        sequence:
+          - repeat:
+              for_each: !input light_devices
+              sequence:
+                service: light.turn_on
+                data:
+                  brightness_step_pct: 20
+                target:
+                  device_id: "{{ repeat.item }}"
+          - service: counter.reset
+            data: {}
+            target:
+              entity_id: !input scene_counter
+      - conditions:
+          - condition: trigger
+            id:
+              - Button3_InitialPress
+        sequence:
+          - repeat:
+              for_each: !input light_devices
+              sequence:
+                service: light.turn_on
+                data:
+                  brightness_step_pct: -20
+                target:
+                  device_id: "{{ repeat.item }}"
+          - service: counter.reset
+            data: {}
+            target:
+              entity_id: !input scene_counter
+      - conditions:
+          - condition: trigger
+            id:
+              - Button3_LongPress
+        sequence:
+          - repeat:
+              for_each: !input light_devices
+              sequence:
+                service: light.turn_on
+                data:
+                  brightness_step_pct: -20
+                target:
+                  device_id: "{{ repeat.item }}"
+          - service: counter.reset
+            data: {}
+            target:
+              entity_id: !input scene_counter
+      - conditions:
+          - condition: trigger
+            id:
+              - Button4_InitialPress
+        sequence:
+          - service: system_log.write
+            data:
+              message: "Scene counter (int): {{ (states(scene_counter) | int) }}, Scenes length: {{ scene_entities | length }}}}, Boolean: {{ (states(scene_counter) | int) >= (scene_entities | length) }}"
+              level: info
+          - if:
+              - condition: template
+                value_template: "{{ (states(scene_counter) | int) >= (scene_entities | length) }}"
+            then:
+              - service: counter.reset
+                data: {}
+                target:
+                  entity_id: !input scene_counter
+          - service: counter.increment
+            data: {}
+            target:
+              entity_id: !input scene_counter
+          - repeat:
+              count: "{{ scene_entities | length }}"
+              sequence:
+                - service: system_log.write
+                  data:
+                    message: "Scene entities: {{ scene_entities }}, Length: {{ scene_entities | length }}, Current iteration: {{ repeat.index }}, Current scene: {{ scene_entities[repeat.index - 1] }}, Scene counter: {{ scene_counter }}, Scene counter state: {{ states(scene_counter) }}"
+                    level: info
+                    # OUTPUT:
+                    # Scene entities: ['scene.kontor_naturlig_lys', 'scene.kontor_les', 'scene.kontor_slapp_av', 'scene.kontor_nattlys'],
+                    # Length: 4,
+                    # Current iteration: 3,
+                    # Current scene: scene.kontor_slapp_av,
+                    # Scene counter: counter.office_dimmer_button4_counter,
+                    # Scene counter state: 2
+                - if:
+                    - condition: template
+                      value_template: "{{ (states(scene_counter) | int) == (repeat.index) }}"
+                  then:
+                    - service: scene.turn_on
+                      target:
+                        entity_id: "{{ scene_entities[repeat.index - 1] }}"
+                      metadata: {}
+mode: single
