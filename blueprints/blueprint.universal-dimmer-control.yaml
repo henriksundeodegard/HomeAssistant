@@ -95,10 +95,10 @@ action:
       scene_entities: !input scene_entities
       scene_counter: !input scene_counter
 
-  # Actions for each trigger
-  - choose:
-      # First button, initial press, toggle lights
-      - conditions:
+  - alias: "Actions for each trigger"
+    choose:
+      - alias: "First button, initial press, toggle lights"
+        conditions:
           - condition: trigger
             id:
               - Button1_InitialPress
@@ -106,7 +106,8 @@ action:
           - repeat:
               for_each: !input light_devices
               sequence:
-                - service: light.toggle
+                - alias: "Toggle light"
+                  service: light.toggle
                   data: {}
                   target:
                     device_id: "{{ repeat.item }}"
@@ -115,8 +116,8 @@ action:
             target:
               entity_id: !input scene_counter
 
-      # Second button, initial press, increase brightness
-      - conditions:
+      - alias: "Second button, initial press, increase brightness"
+        conditions:
           - condition: trigger
             id:
               - Button2_InitialPress
@@ -124,18 +125,19 @@ action:
           - repeat:
               for_each: !input light_devices
               sequence:
-                service: light.turn_on
-                data:
-                  brightness_step_pct: 20
-                target:
-                  device_id: "{{ repeat.item }}"
+                - alias: "Increase brightness"
+                  service: light.turn_on
+                  data:
+                    brightness_step_pct: 20
+                  target:
+                    device_id: "{{ repeat.item }}"
           - service: counter.reset
             data: {}
             target:
               entity_id: !input scene_counter
 
-      # Second button, long press, increase brightness continuously
-      - conditions:
+      - alias: "Second button, long press, increase brightness continuously"
+        conditions:
           - condition: trigger
             id:
               - Button2_LongPress
@@ -143,18 +145,19 @@ action:
           - repeat:
               for_each: !input light_devices
               sequence:
-                service: light.turn_on
-                data:
-                  brightness_step_pct: 20
-                target:
-                  device_id: "{{ repeat.item }}"
+                - alias: "Increase brightness"
+                  service: light.turn_on
+                  data:
+                    brightness_step_pct: 20
+                  target:
+                    device_id: "{{ repeat.item }}"
           - service: counter.reset
             data: {}
             target:
               entity_id: !input scene_counter
 
-      # Third button, initial press, decrease brightness
-      - conditions:
+      - alias: "Third button, initial press, decrease brightness"
+        conditions:
           - condition: trigger
             id:
               - Button3_InitialPress
@@ -162,18 +165,19 @@ action:
           - repeat:
               for_each: !input light_devices
               sequence:
-                service: light.turn_on
-                data:
-                  brightness_step_pct: -20
-                target:
-                  device_id: "{{ repeat.item }}"
+                - alias: "Decrease brightness"
+                  service: light.turn_on
+                  data:
+                    brightness_step_pct: -20
+                  target:
+                    device_id: "{{ repeat.item }}"
           - service: counter.reset
             data: {}
             target:
               entity_id: !input scene_counter
 
-      # Third button, long press, decrease brightness continuously
-      - conditions:
+      - alias: "Third button, long press, decrease brightness continuously"
+        conditions:
           - condition: trigger
             id:
               - Button3_LongPress
@@ -181,48 +185,52 @@ action:
           - repeat:
               for_each: !input light_devices
               sequence:
-                service: light.turn_on
-                data:
-                  brightness_step_pct: -20
-                target:
-                  device_id: "{{ repeat.item }}"
+                - alias: "Decrease brightness"
+                  service: light.turn_on
+                  data:
+                    brightness_step_pct: -20
+                  target:
+                    device_id: "{{ repeat.item }}"
           - service: counter.reset
             data: {}
             target:
               entity_id: !input scene_counter
 
-      # Fourth button, initial press, activate scenes
-      - conditions:
+      - alias: "Fourth button, initial press, activate scenes"
+        conditions:
           - condition: trigger
             id:
               - Button4_InitialPress
         sequence:
-          # Reset counter if it is larger than the number of scenes
           - if:
-              - condition: template
+              - alias: "If the scene counter is larger than the number of scenes"
+                condition: template
                 value_template: "{{ (states(scene_counter) | int) >= (scene_entities | length) }}"
             then:
-              - service: counter.reset
+              - alias: "Reset the counter to 0"
+                service: counter.reset
                 data: {}
                 target:
                   entity_id: !input scene_counter
 
-          # Increment counter to select next scene
-          - service: counter.increment
+          - alias: "Increment counter to select next scene"
+            service: counter.increment
             data: {}
             target:
               entity_id: !input scene_counter
 
-          # Activate scene based on counter value
-          - repeat:
+          - alias: "Activate scene based on counter value"
+            repeat:
               count: "{{ scene_entities | length }}"
               sequence:
-                - if:
-                    - condition: template
-                      value_template: "{{ (states(scene_counter) | int) == (repeat.index) }}"
-                  then:
-                    - service: scene.turn_on
-                      target:
-                        entity_id: "{{ scene_entities[repeat.index - 1] }}"
-                      metadata: {}
+                if:
+                  - alias: "If current scene counter value matches the repeat index"
+                    condition: template
+                    value_template: "{{ (states(scene_counter) | int) == (repeat.index) }}"
+                then:
+                  - alias: "Activate the scene"
+                    service: scene.turn_on
+                    target:
+                      entity_id: "{{ scene_entities[repeat.index - 1] }}"
+                    metadata: {}
 mode: single
