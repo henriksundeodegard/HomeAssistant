@@ -14,7 +14,7 @@ blueprint:
           filter:
             - integration: hue
     light_devices:
-      name: Light
+      name: Lights to control
       description: The Light Devices to control
       selector:
         device:
@@ -24,8 +24,8 @@ blueprint:
           filter:
             - integration: hue
     scene_entities:
-      name: Scenes
-      description: List of scenes to activate when pressing the fourth button on the dimmer remote. The scenes are selected based on the current counter value. The counter value is incremented by 1 each time the button is pressed, and loops back to start.
+      name: Scenes to cycle
+      description: List of scenes to activate when pressing the fourth button on the dimmer remote. The scenes are selected based on the current counter value. The counter value is incremented by 1 each time the button is pressed, and loops back to start, creating a cycling effect.
       selector:
         entity:
           multiple: true
@@ -33,7 +33,7 @@ blueprint:
             - integration: hue
               domain: scene
     scene_counter:
-      name: Scene Counter Variable
+      name: Global Scene Cycling Counter Variable
       description: Global counter variable to keep track of the scene state. This should be a Counter Helper created under "Devices and Services".
       selector:
         entity:
