@@ -41,67 +41,29 @@ blueprint:
           filter:
             - domain: counter
 
+mode: queued
+max: 10
+max_exceeded: silent
+
 trigger:
-  # First button, initial press
-  - device_id: !input dimmer_device
-    domain: hue
-    platform: device
-    type: initial_press
-    subtype: 1
-    id: Button1_InitialPress
-
-  # Second button, initial press
-  - device_id: !input dimmer_device
-    domain: hue
-    platform: device
-    type: initial_press
-    subtype: 2
-    id: Button2_InitialPress
-
-  # Second button, long press
-  - device_id: !input dimmer_device
-    domain: hue
-    platform: device
-    type: repeat
-    subtype: 2
-    id: Button2_LongPress
-
-  # Third button, initial press
-  - device_id: !input dimmer_device
-    domain: hue
-    platform: device
-    type: initial_press
-    subtype: 3
-    id: Button3_InitialPress
-
-  # Third button, long press
-  - device_id: !input dimmer_device
-    domain: hue
-    platform: device
-    type: repeat
-    subtype: 3
-    id: Button3_LongPress
-
-  # Fourth button, initial press
-  - device_id: !input dimmer_device
-    domain: hue
-    platform: device
-    type: initial_press
-    subtype: 4
-    id: Button4_InitialPress
+  - platform: event
+    event_type: hue_event
+    event_data:
+      device_id: !input dimmer_device
 
 action:
   - variables:
       scene_entities: !input scene_entities
       scene_counter: !input scene_counter
+      button_index: "{{ trigger.event.data.subtype }}"
+      button_action: "{{ trigger.event.data.type }}"
 
   - alias: "Actions for each trigger"
     choose:
-      - alias: "First button, initial press, toggle lights"
+      - alias: "First button, toggle lights"
         conditions:
-          - condition: trigger
-            id:
-              - Button1_InitialPress
+          - condition: template
+            value_template: "{{ (button_index) == 1 and button_action == 'initial_press' }}"
         sequence:
           - repeat:
               for_each: !input light_devices
@@ -116,11 +78,10 @@ action:
             target:
               entity_id: !input scene_counter
 
-      - alias: "Second button, initial press, increase brightness"
+      - alias: "Second button, increase brightness"
         conditions:
-          - condition: trigger
-            id:
-              - Button2_InitialPress
+          - condition: template
+            value_template: "{{ (button_index) == 2 and (button_action == 'initial_press' or button_action == 'repeat') }}"
         sequence:
           - repeat:
               for_each: !input light_devices
@@ -136,31 +97,10 @@ action:
             target:
               entity_id: !input scene_counter
 
-      - alias: "Second button, long press, increase brightness continuously"
+      - alias: "Third button, decrease brightness"
         conditions:
-          - condition: trigger
-            id:
-              - Button2_LongPress
-        sequence:
-          - repeat:
-              for_each: !input light_devices
-              sequence:
-                - alias: "Increase brightness"
-                  service: light.turn_on
-                  data:
-                    brightness_step_pct: 20
-                  target:
-                    device_id: "{{ repeat.item }}"
-          - service: counter.reset
-            data: {}
-            target:
-              entity_id: !input scene_counter
-
-      - alias: "Third button, initial press, decrease brightness"
-        conditions:
-          - condition: trigger
-            id:
-              - Button3_InitialPress
+          - condition: template
+            value_template: "{{ (button_index) == 3 and (button_action == 'initial_press' or button_action == 'repeat') }}"
         sequence:
           - repeat:
               for_each: !input light_devices
@@ -176,31 +116,10 @@ action:
             target:
               entity_id: !input scene_counter
 
-      - alias: "Third button, long press, decrease brightness continuously"
+      - alias: "Fourth button, cycle scenes"
         conditions:
-          - condition: trigger
-            id:
-              - Button3_LongPress
-        sequence:
-          - repeat:
-              for_each: !input light_devices
-              sequence:
-                - alias: "Decrease brightness"
-                  service: light.turn_on
-                  data:
-                    brightness_step_pct: -20
-                  target:
-                    device_id: "{{ repeat.item }}"
-          - service: counter.reset
-            data: {}
-            target:
-              entity_id: !input scene_counter
-
-      - alias: "Fourth button, initial press, activate scenes"
-        conditions:
-          - condition: trigger
-            id:
-              - Button4_InitialPress
+          - condition: template
+            value_template: "{{ (button_index) == 4 and button_action == 'initial_press' }}"
         sequence:
           - if:
               - alias: "If the scene counter is larger than the number of scenes"
@@ -233,4 +152,3 @@ action:
                     target:
                       entity_id: "{{ scene_entities[repeat.index - 1] }}"
                     metadata: {}
-mode: single
